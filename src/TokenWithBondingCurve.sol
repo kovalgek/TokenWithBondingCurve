@@ -2,12 +2,12 @@
 pragma solidity ^0.8.13;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {BancorBondingCurve} from "./BancorBondingCurve.sol";
+import {CappedGasPrice} from "./CappedGasPrice.sol";
 
 /// @author kovalgek
-contract TokenWithBondingCurve is BancorBondingCurve, ERC20, Ownable {
+contract TokenWithBondingCurve is BancorBondingCurve, ERC20, CappedGasPrice {
 
     uint256 public scale = 10**18;
     uint256 public reserveBalance = 10*scale;
@@ -24,16 +24,16 @@ contract TokenWithBondingCurve is BancorBondingCurve, ERC20, Ownable {
         uint256 _reserveRatio,
         string memory _name,
         string memory _symbol
-    ) ERC20(_name, _symbol) Ownable(msg.sender) {
+    ) ERC20(_name, _symbol) CappedGasPrice(msg.sender) {
         reserveRatio = _reserveRatio;
         _mint(msg.sender, 1*scale);
     }
 
-    function mint() external payable {
+    function mint() external payable validGasPrice {
         _continuousMint(msg.value);
     }
 
-    function burn(uint256 _amount) external {
+    function burn(uint256 _amount) external validGasPrice {
         uint256 returnAmount = _continuousBurn(_amount);
         payable(msg.sender).transfer(returnAmount);
     }
